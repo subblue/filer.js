@@ -674,7 +674,7 @@ var Filer = new function() {
    * @param {Function=} opt_errorHandler Optional error callback.
    */
   Filer.prototype.rm = function(entryOrPath, successCallback,
-                                opt_errorHandler, opt_missingFileHandler) {
+                                opt_errorHandler) {
     if (!fs_) {
       throw new Error(FS_INIT_ERROR_MSG);
     }
@@ -690,7 +690,7 @@ var Filer = new function() {
     if (entryOrPath.isFile || entryOrPath.isDirectory) {
       removeIt(entryOrPath);
     } else {
-      getEntry_(removeIt, entryOrPath, null, opt_missingFileHandler);
+      getEntry_(removeIt, entryOrPath, opt_errorHandler);
     }
   };
 

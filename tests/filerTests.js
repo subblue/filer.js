@@ -433,7 +433,7 @@ test('rm()', 7, function() {
     filer.rm(fsURL + "_BAD", function() {
       ok(true, fileName4 + ' removed file by filesystem URL.');
       start();
-    }, onError, function (e) {
+    }, function (e) {
       equal(e.code, FileError.NOT_FOUND_ERR, 'Caught file not found error');
       start();
     });
