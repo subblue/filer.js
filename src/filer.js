@@ -261,7 +261,11 @@ var Filer = new function() {
   var isFsURL_ = function(path) {
     return path.indexOf(FS_URL_SCHEME) == 0;
   };
-
+  
+  var isOfType = function(obj, type) {
+    return window.toString.call(obj) === '[object ' + type + ']';
+  };
+  
   // Path can be relative or absolute. If relative, it's taken from the cwd_.
   // If a filesystem URL is passed it, it is simple returned
   var pathToFsURL_ = function(path) {
@@ -281,7 +285,8 @@ var Filer = new function() {
 
     return path;
   };
-
+  
+  
   /**
    * Looks up a FileEntry or DirectoryEntry for a given path.
    *
@@ -294,25 +299,32 @@ var Filer = new function() {
    */
   var getEntry_ = function(callback, var_args) {
     var srcStr = arguments[1];
-    var destStr = arguments[2];
-
-    var onError = function(e) {
-      if (e.code == FileError.NOT_FOUND_ERR) {
-        if (destStr) {
-          throw new Error('"' + srcStr + '" or "' + destStr +
-                          '" does not exist.');
+    var destStr = isOfType(arguments[2], 'String') ? arguments[2] : null;
+    var onError;
+    
+    if (isOfType(arguments[2], 'Object')) {
+      onError = arguments[2];
+    } else if (isOfType(arguments[3], 'Object')) {
+      onError = arguments[3];
+    } else {
+      onError = function(e) {
+        if (e.code == FileError.NOT_FOUND_ERR) {
+          if (destStr) {
+            throw new Error('"' + srcStr + '" or "' + destStr +
+                            '" does not exist.');
+          } else {
+            throw new Error('"' + srcStr + '" does not exist.');
+          }
         } else {
-          throw new Error('"' + srcStr + '" does not exist.');
+          throw new Error('Problem getting Entry for one or more paths.');
         }
-      } else {
-        throw new Error('Problem getting Entry for one or more paths.');
-      }
-    };
+      };
+    }
 
     // Build a filesystem: URL manually if we need to.
     var src = pathToFsURL_(srcStr);
 
-    if (arguments.length == 3) {
+    if (srcStr && destStr) {
       var dest = pathToFsURL_(destStr);
       self.resolveLocalFileSystemURL(src, function(srcEntry) {
         self.resolveLocalFileSystemURL(dest, function(destEntry) {
@@ -662,7 +674,7 @@ var Filer = new function() {
    * @param {Function=} opt_errorHandler Optional error callback.
    */
   Filer.prototype.rm = function(entryOrPath, successCallback,
-                                opt_errorHandler) {
+                                opt_errorHandler, opt_missingFileHandler) {
     if (!fs_) {
       throw new Error(FS_INIT_ERROR_MSG);
     }
@@ -678,7 +690,7 @@ var Filer = new function() {
     if (entryOrPath.isFile || entryOrPath.isDirectory) {
       removeIt(entryOrPath);
     } else {
-      getEntry_(removeIt, entryOrPath);
+      getEntry_(removeIt, entryOrPath, null, opt_missingFileHandler);
     }
   };
 

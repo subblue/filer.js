@@ -16,6 +16,11 @@ function onError(e) {
   start();
 };
 
+var onMissingError = function(e) {
+  ok(false, 'missing file error' + e.name);
+  start();
+};
+
 
 module('init()', {
   setup: function() {
@@ -390,7 +395,7 @@ test('create()', 4, function() {
   }, 500);
 });
 
-test('rm()', 6, function() {
+test('rm()', 7, function() {
   var filer = this.filer;
   var fileName = this.FILE_NAME + Date.now();
   var folderName = this.FOLDER_NAME + Date.now();
@@ -421,7 +426,19 @@ test('rm()', 6, function() {
       start();
     }, onError);
   }, onError);
-
+  
+  var fileName4 = fileName + '4';
+  filer.create(fileName4, false, function(entry) {
+    var fsURL = filer.pathToFilesystemURL(entry.fullPath);
+    filer.rm(fsURL + "_BAD", function() {
+      ok(true, fileName4 + ' removed file by filesystem URL.');
+      start();
+    }, onError, function (e) {
+      equal(e.code, FileError.NOT_FOUND_ERR, 'Caught file not found error');
+      start();
+    });
+  }, onError);
+  
   stop();
   filer.mkdir(folderName, false, function(entry) {
     filer.rm(folderName, function() {
@@ -448,6 +465,7 @@ test('rm()', 6, function() {
       start();
     }, onError);
   }, onError);
+  
 });
 
 test('cp()', 20, function() {
